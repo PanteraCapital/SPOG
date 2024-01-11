@@ -43,23 +43,33 @@
   <br>
   <ul id="vote" class="nav flex-column">
     <li>
-      <a href="#" class="contract-vote" data-vote="{{ voteTypeMap.informedClaimable }}">Vote Informed</a> (<span>{{ votes.informedClaimable or 0 }}</span>)
+      <a href="#" class="contract-vote" data-vote="{{ voteTypeMap.informedClaimable }}">Vote Informed</a>
     </li>
     <li>
-      <a href="#" class="contract-vote" data-vote="{{ voteTypeMap.uninformedClaimable }}">Vote Uninformed</a> (<span>{{ votes.uninformedClaimable or 0 }}</span>)
+      <a href="#" class="contract-vote" data-vote="{{ voteTypeMap.uninformedClaimable }}">Vote Uninformed</a>
     </li>
     <li>
-      <a href="#" class="contract-vote" data-vote="{{ voteTypeMap.abstainedClaimable }}">Abstain</a> (<span>{{ votes.abstainedClaimable or 0 }}</span>)
+      <a href="#" class="contract-vote" data-vote="{{ voteTypeMap.abstainedClaimable }}">Abstain</a>
+    </li>
+  </ul>
+
+  <hr>
+  <h3>Real Count</h3>
+  <ul>
+    <li>
+      Uninformed: <span id="vote-count-{{ voteTypeMap.uninformedClaimable }}">{{ votes.uninformedClaimable or 0 }}</span>,
+      Informed: <span id="vote-count-{{ voteTypeMap.informedClaimable }}">{{ votes.informedClaimable or 0 }}</span>,
+      Abstained: <span id="vote-count-{{ voteTypeMap.abstainedClaimable }}">{{ votes.abstainedClaimable or 0 }}</span>
     </li>
   </ul>
 
   {% if votesTallied.length > 0 %}
   <hr>
-  <h3>Tallied</h3>
+  <h3>Claimable Results</h3>
   <ul>
     {% for tallied in votesTallied %}
     <li>
-      Informed: {{ tallied.informedClaimable }} | Uninformed: {{ tallied.uninformedClaimable }} | Abstained: {{ votes.abstainedClaimable }}
+      Uninformed: {{ tallied.uninformedClaimable or 0 }}, Informed: {{ tallied.informedClaimable or 0 }}, Abstained: {{ tallied.abstainedClaimable or 0 }} <span class="badge bg-secondary">{{ tallied.type }}</span>
     </li>
     {% endfor %}
   </ul>

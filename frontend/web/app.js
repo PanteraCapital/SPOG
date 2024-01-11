@@ -29,7 +29,7 @@ app.get('/', (req, res) => {
 app.get('/demo/:contractAddress', async (req, res) => {
   const abiString = fs.readFileSync(`./abi/${req.params.contractAddress}.json`, 'utf8');
   const abi = JSON.parse(abiString);
-  const events = abi.filter(i => i.type === 'event');
+  const events = abi.filter(i => i.type === 'event' | i.type === 'function');
   const web3 = new Web3(process.env.WEB3_PROJECT_URL);
 
   const topicsMapping = {};
@@ -37,6 +37,7 @@ app.get('/demo/:contractAddress', async (req, res) => {
       const signature = `${event.name}(${event.inputs.map(j => j.internalType).join(',')})`;
       topicsMapping[web3.utils.keccak256(signature)] = signature;
   });
+  const slicedTopicsMapping = Object.fromEntries(Object.entries(topicsMapping).map(([key, value]) => [key.slice(0, 10), value]));
 
   const contract = new web3.eth.Contract(abi, req.params.contractAddress);
   const logs = await web3.eth.getPastLogs({
@@ -54,8 +55,10 @@ app.get('/demo/:contractAddress', async (req, res) => {
   let ended = false;
   let votes = {};
   let votesTallied = [];
-  logs.forEach(log => {
+
+  for (const log of logs) {
     const topics = log.topics.map(t => topicsMapping[t] || t);
+
     if (topics.includes('RoundEnded(bool)')) {
       ended = true;
     }
@@ -71,11 +74,11 @@ app.get('/demo/:contractAddress', async (req, res) => {
     }
 
     if (topics.includes('VotesTallied(int256,int256,int256)')) {
-      votesTallied.push(web3.eth.abi.decodeLog(votesTalliedAbi.inputs, log.data));
+      let transaction = await web3.eth.getTransaction(log.transactionHash);
+      votesTallied.push({...web3.eth.abi.decodeLog(votesTalliedAbi.inputs, log.data), 'type': slicedTopicsMapping[transaction.input]});
     }
-  });
+  }
 
-  console.log(votesTallied, votes);
   res.render('pages/demo.html', {
     'contractAddress': req.params.contractAddress,
     'contract': contracts[req.params.contractAddress],

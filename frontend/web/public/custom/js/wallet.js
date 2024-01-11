@@ -36,7 +36,6 @@ for (let i = 0, iLength = links.length; i < iLength; i++) {
     errorElem.style.display = 'none';
     loadingElem.style.display = '';
 
-    console.log('Voting:', e.target.getAttribute('data-vote'));
     var account = getAccount();
     if (account.isConnected) {
       try {
@@ -54,7 +53,7 @@ for (let i = 0, iLength = links.length; i < iLength; i++) {
           icon: 'success',
         });
 
-        let spanElem = e.target.nextElementSibling;
+        let spanElem = document.getElementById('vote-count-' + e.target.getAttribute('data-vote'));
         spanElem.innerText = parseInt(spanElem.innerText) + 1;
       } catch (error) {
         [['round closed', 'This round has closed.'], ['vote once', 'You can only vote once!']].forEach(function(err) {
