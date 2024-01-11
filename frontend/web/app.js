@@ -46,13 +46,14 @@ app.get('/demo/:contractAddress', async (req, res) => {
   });
 
   const voteAbi = abi.find((item) => item.name === 'VoteSubmitted');
+  const votesTalliedAbi = abi.find((item) => item.name === 'VotesTallied');
   const voteTypeMap = {'informedClaimable': 3, 'uninformedClaimable': 2, 'abstainedClaimable': 1}
   const swappedVoteTypeMap = Object.fromEntries(
     Object.entries(voteTypeMap).map(([key, value]) => [value, key])
   );
   let ended = false;
   let votes = {};
-  let votesTallied = null;
+  let votesTallied = [];
   logs.forEach(log => {
     const topics = log.topics.map(t => topicsMapping[t] || t);
     if (topics.includes('RoundEnded(bool)')) {
@@ -70,16 +71,18 @@ app.get('/demo/:contractAddress', async (req, res) => {
     }
 
     if (topics.includes('VotesTallied(int256,int256,int256)')) {
-      votesTallied = web3.eth.abi.decodeLog(voteAbi.inputs, log.data);
+      votesTallied.push(web3.eth.abi.decodeLog(votesTalliedAbi.inputs, log.data));
     }
   });
 
+  console.log(votesTallied, votes);
   res.render('pages/demo.html', {
     'contractAddress': req.params.contractAddress,
     'contract': contracts[req.params.contractAddress],
     'abi': abiString,
     'ended': ended,
-    'votes': votesTallied || votes,
+    'votes': votes,
+    'votesTallied': votesTallied,
     'voteTypeMap': voteTypeMap,
   });
 });

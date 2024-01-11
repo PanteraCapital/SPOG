@@ -53,6 +53,18 @@
     </li>
   </ul>
 
-  <div id="error-message">{% if ended %}Err: This round has closed.{% endif %}</div>
+  {% if votesTallied.length > 0 %}
+  <hr>
+  <h3>Tallied</h3>
+  <ul>
+    {% for tallied in votesTallied %}
+    <li>
+      Informed: {{ tallied.informedClaimable }} | Uninformed: {{ tallied.uninformedClaimable }} | Abstained: {{ votes.abstainedClaimable }}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <div id="error-message">{% if ended %}This round has closed.{% endif %}</div>
 </div>
 {% endblock %}
