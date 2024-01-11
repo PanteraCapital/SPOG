@@ -27,7 +27,18 @@ app.get('/', (req, res) => {
 });
 
 app.get('/demo/:contractAddress', async (req, res) => {
-  const abiString = fs.readFileSync(`./abi/${req.params.contractAddress}.json`, 'utf8');
+  const filePath = `./abi/${req.params.contractAddress}.json`;
+  let abiString;
+  try {
+    abiString = fs.readFileSync(filePath, 'utf8');
+  } catch (e) {
+    const abiUrl = `https://api-sepolia.arbiscan.io/api?module=contract&action=getabi&address=${req.params.contractAddress}`;
+    const response = await fetch(abiUrl);
+    // Save the ABI to the local file
+    fs.writeFileSync(filePath, JSON.parse(await response.text()).result, 'utf8');
+
+    abiString = fs.readFileSync(filePath, 'utf8');
+  }
   const abi = JSON.parse(abiString);
   const events = abi.filter(i => i.type === 'event' | i.type === 'function');
   const web3 = new Web3(process.env.WEB3_PROJECT_URL);
