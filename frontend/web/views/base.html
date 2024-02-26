@@ -3,42 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="/dist/{{ manifest['public/custom/css/base.css'].file }}">
+  <script type="text/javascript">
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition((position) => {
+        const latitude = position.coords.latitude;
+        const longitude = position.coords.longitude;
+
+        console.log(`${latitude},${longitude}`);
+        document.getElementById('user-location').innerText = `${latitude},${longitude}`;
+      });
+    }
+  </script>
   {% block css %}{% endblock %}
   <title>SPOG{% block title %}{% endblock %}</title>
 </head>
 <body>
-  <div class="container-fluid">
-    <div class="row" style="position: relative; min-height: 100vw;">
-      <nav class="top-0 bottom-0 col-md-3 col-lg-2 d-md-block pt-2 bg-light sidebar">
-        <ul class="nav flex-column">
-          <li class="nav-item">
-            <a class="nav-link" href="/">SPOG</a>
-          </li>
+  <header>
+    <p><i class="icon icon-lab"></i> PANTERA CAPITAL</p>
+    <p><i class="icon icon-clock"></i> {{ formattedDate }}</p>
+    <p><i class="icon icon-location"></i> <span id="user-location">0.0000000,0.0000000</span></p>
 
-          <li class="nav-item">
-            <a class="nav-link btn-toggle collapsed" data-bs-toggle="collapse" data-bs-target="#experiment-collapse" aria-expanded="false" href="#">Experiment</a>
-          </li>
-          <div class="collapse" id="experiment-collapse">
-            {% for contract in contractsList %}
-            <li class="nav-item">
-              <a class="nav-link" href="/demo/{{ contract.address }}">{{ contract.name }}</a>
-            </li>
-            {% endfor %}
-          </div>
+  </header>
 
-          <!-- <li class="nav-item">
-            <a class="nav-link" href="/research">Research</a>
-          </li> -->
-        </ul>
-      </nav>
+  <nav>
+    <ul class="nav flex-column">
+      {% for contract in contractsList %}
+      <li class="nav-item">
+        <a class="nav-link {% if contract.address == contractAddress %}active{% endif %}" href="/demo/{{ contract.address }}">{{ contract.name|upper }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </nav>
 
+  <div class="container-md">
+    <div class="row" style="position: relative; min-height: 100vh;">
       <main class="col-md-9 ms-sm-auto col-lg-10 px-md-5 mt-md-5">
         {% block content %}{% endblock %}
       </main>
     </div>
   </div>
+
+  <footer>
+    <a href="/" class="btn btn-default float-start">
+      HOW IT WORKS?
+    </a>
+
+    <div class="btn-group float-end" role="group">
+      <a href="#" class="btn btn-default">
+        <i class="icon icon-star"></i> EXPERIMENT
+      </a>
+      <a href="#" class="btn btn-white">ON</a>
+    </div>
+  </footer>
   <script src="/js/bootstrap.bundle.min.js"></script>
   {% block js %}{% endblock %}
 </body>

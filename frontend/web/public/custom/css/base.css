@@ -1,3 +1,127 @@
+@font-face {
+  font-family: Rifton;
+  src: url(../fonts/Rifton-Regular.otf);
+}
+
+body {
+  background: url('../img/screen.png') repeat;
+  color: #fff;
+}
+
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 15px;
+}
+
+footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 15px;
+}
+
+nav {
+  position: fixed;
+  top: 20vh;
+  left: 3px;
+  z-index: 2;
+}
+
+p {
+  margin-bottom: .8rem;
+}
+
+* {
+  font-family: "JetBrains Mono", monospace;
+}
+
+:root {
+  --bs-body-color: #ffffff;
+}
+
+.nav {
+  --bs-nav-link-color: #d2d2d2;
+  --bs-nav-link-hover-color: #ffffff;
+}
+
+.nav-link {
+  --bs-nav-link-padding-y: 5px;
+}
+
+.nav-link:before {
+  content: " ";
+  background-color: #d2d2d2;
+  height: 8px;
+  width: 8px;
+  float: left;
+  margin: 8px 10px 0 0;
+  border-radius: 2px;
+  transition: height .2s, color .2s, margin-top .2s;
+}
+
+.nav-link:focus:before, .nav-link:hover:before, .nav-link.active:before {
+  background-color: #faff1a;
+  height: 24px;
+  margin-top: 0px;
+}
+
+.btn {
+  --bs-btn-font-size: 18px;
+  --bs-btn-hover-color: #ffffff;
+  --bs-btn-border-color: #ffffff;
+  --bs-btn-hover-bg: #2d2d2d;
+  --bs-btn-bg: #2d2d2d;
+  --bs-btn-hover-border-color: #ffffff;
+}
+
+.btn-white {
+  --bs-btn-bg: #ffffff;
+  --bs-btn-color: #2d2d2d;
+  --bs-btn-hover-bg: #ffffff;
+}
+
+.btn-group {
+  background-color: #2d2d2d;
+  padding: 1px;
+  border-radius: 6px;
+  border: 1px solid #ffffff;
+}
+
+.btn-group .btn {
+  --bs-btn-border-width: 0;
+}
+
+.btn-group .btn + .btn {
+  border-radius: 6px;
+}
+
+.icon {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  margin: 0 0 -4px;
+}
+
+.icon-star {
+  background-image: url('../img/star.png');
+}
+
+.icon-lab {
+  background-image: url('../img/lab.png');
+}
+
+.icon-clock {
+  background-image: url('../img/clock.png');
+}
+
+.icon-location {
+  background-image: url('../img/location.png');
+}
+
 .sidebar {
   position: absolute;
 }

@@ -21,6 +21,11 @@ const contractsList = yaml.load(fs.readFileSync('./../../voting-rounds.yml', 'ut
 const contracts = contractsList.reduce((contracts, contract) => Object.assign({}, contracts, {[contract.address]: contract}), {});
 env.addGlobal('contracts', contracts);
 env.addGlobal('contractsList', contractsList);
+function formattedDate() {
+  return new Intl.DateTimeFormat('en-US', {weekday: 'short', day: 'numeric', month: 'short',
+    year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true}).format(new Date());
+}
+env.addGlobal('formattedDate', formattedDate());
 
 app.get('/', (req, res) => {
   res.render('pages/spog.html', {});
