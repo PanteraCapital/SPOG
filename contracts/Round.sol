@@ -64,24 +64,21 @@ contract Round is Ownable(msg.sender) {
         int votesTotal = votesInformed + votesUninformed; 
         require(votesTotal > 0, "no votes submitted");
 
-        int n = votesTotal * multiplier;
-        int u = votesUninformed * multiplier;
-        int i = votesInformed * multiplier;
-
-        int b = (n/2 - u/n) * i/n;
-        int v = (n - 1)/n*n + 1/n;
-        if(v > 300000){
-            v = 300000;
+        int b = ((((votesTotal * multiplier) / 2) - (votesUninformed * multiplier / votesTotal)) * votesInformed) / votesTotal;
+        int v = ((votesTotal - 1) * multiplier) / (votesTotal * votesTotal) + ((1 * multiplier) / votesTotal);
+        
+        if (v * 10 > 3) {
+            v = (3 * multiplier) / 10;
         }
-
+        
         if (b > 1 * multiplier) {
-            informedClaimable = (b -1*multiplier) / multiplier;
+            informedClaimable = (b - (1* multiplier)) / multiplier;
         }
         if (b > 0) {
             uninformedClaimable = b / multiplier;
         }
         if (b-v > 0) {
-            abstainedClaimable = (b - v) / multiplier;
+            abstainedClaimable = ( b - v ) / multiplier;
         }
         emit VotesTallied(informedClaimable, uninformedClaimable, abstainedClaimable);
     }
@@ -92,12 +89,11 @@ contract Round is Ownable(msg.sender) {
         int votesTotal = votesInformed + votesUninformed;
         require(votesTotal > 0, "no votes submitted");
 
-        int n = votesTotal * multiplier;
-        int u = votesUninformed * multiplier;
-        int i = votesInformed * multiplier;
-
-        int b = (n/2 - u/n) * i/n;
-
+        int b = ((((votesTotal * multiplier) / 2) - (votesUninformed * multiplier) / votesTotal) * votesInformed) / votesTotal;
+        
+        if (b > 1 * multiplier) {
+            informedClaimable = ((b * multiplier) - (1 * multiplier)) / multiplier;
+        }
         if (b > 0) {
             uninformedClaimable = b / multiplier;
             abstainedClaimable = b  / multiplier;
