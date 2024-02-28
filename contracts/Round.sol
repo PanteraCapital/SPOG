@@ -4,7 +4,6 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
 
 contract Round is Ownable(msg.sender) {
     int votesUninformed = 0;
@@ -14,6 +13,7 @@ contract Round is Ownable(msg.sender) {
     int uninformedClaimable = 0;
     int abstainedClaimable = 0;
     bool public ended = false;
+    int multiplier = 10**6;
 
     mapping(address => int) private voteMap;
     mapping(address => bool) private withdrawalMap;
@@ -64,22 +64,22 @@ contract Round is Ownable(msg.sender) {
         int votesTotal = votesInformed + votesUninformed; 
         require(votesTotal > 0, "no votes submitted");
 
-        int b = (votesTotal/2 - votesUninformed / votesTotal) * votesInformed / votesTotal; 
-        int v = ((votesTotal - 1) / (votesTotal * votesTotal)) + (1  / votesTotal);
+        int b = ((((votesTotal * multiplier) / 2) - (votesUninformed * multiplier / votesTotal)) * votesInformed) / votesTotal; 
+        int v = ((votesTotal - 1) * multiplier) / (votesTotal * votesTotal) + ((1 * multiplier) / votesTotal);
 
         // allows for up to 10**59 votes
-        if (v * 10**18 > 3**18) {
-            v = 3**18;
+        if (v * 10 > 3) {
+            v = (3 * multiplier) / 10;
         }
 
-        if (b > 1) {
-            informedClaimable = b-1;
+        if (b > 1 * multiplier) {
+            informedClaimable = (b - (1* multiplier)) / multiplier;
         }
         if (b > 0) {
-            uninformedClaimable = b;
+            uninformedClaimable = b / multiplier;
         }
         if (b-v > 0) {
-            abstainedClaimable = b * 10**18 > v ? b * 10**18 - v : int(0);
+            abstainedClaimable = ( b - v ) / multiplier;
         }
         emit VotesTallied(informedClaimable, uninformedClaimable, abstainedClaimable);
     }
@@ -90,15 +90,15 @@ contract Round is Ownable(msg.sender) {
         int votesTotal = votesInformed + votesUninformed;
         require(votesTotal > 0, "no votes submitted");
 
-        int b = (int(votesTotal) / 2 - (int(votesUninformed) / int(votesTotal))) * int(votesInformed) / int(votesTotal);
+        int b = ((((votesTotal * multiplier) / 2) - (votesUninformed * multiplier) / votesTotal) * votesInformed) / votesTotal;
 
-        if (b > 1) {
-            informedClaimable = b-1;
+        if (b > 1 * multiplier) {
+            informedClaimable = ((b * multiplier) - (1 * multiplier)) / multiplier;
         }
 
         if (b > 0) {
-            uninformedClaimable = b;
-            abstainedClaimable = b;
+            uninformedClaimable = b / multiplier;
+            abstainedClaimable = b  / multiplier;
         }
     
         emit VotesTallied(informedClaimable, uninformedClaimable, abstainedClaimable);
