@@ -28,7 +28,7 @@ task('nodemon', (cb) => {
   return nodemon({
     script: 'app.js',
     ext: '*',
-    ignore: ['node_modules/', 'dist/', 'abi/', 'public/'],
+    ignore: ['node_modules/', 'abi/', 'public/'],
   }).on('start', () => {
     if (!started) {
       cb();

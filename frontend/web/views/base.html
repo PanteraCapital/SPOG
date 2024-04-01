@@ -8,17 +8,9 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/bootstrap.min.css">
   <link rel="stylesheet" type="text/css" href="/dist/{{ manifest['public/custom/css/base.css'].file }}">
-  <script type="text/javascript">
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        const latitude = position.coords.latitude;
-        const longitude = position.coords.longitude;
+  <link rel="stylesheet" type="text/css" href="/dist/{{ manifest['public/custom/css/web3modal.css'].file }}">
+  <script type="text/javascript" src="/dist/js/base.js"></script>
 
-        console.log(`${latitude},${longitude}`);
-        document.getElementById('user-location').innerText = `${latitude},${longitude}`;
-      });
-    }
-  </script>
   {% block css %}{% endblock %}
   <title>SPOG{% block title %}{% endblock %}</title>
 </head>
@@ -43,6 +35,7 @@
   <div class="container-md">
     <div class="row" style="position: relative; min-height: 100vh;">
       <main class="col-md-9 ms-sm-auto col-lg-10 px-md-5 mt-md-5">
+        {% include 'widgets/loading.html' %}
         {% block content %}{% endblock %}
       </main>
     </div>

@@ -20,11 +20,55 @@ const chains = [defaultChain, arbitrum];
 const wagmiConfig = defaultWagmiConfig({ chains, projectId, metadata });
 
 // 3. Create modal
-const modal = createWeb3Modal({ wagmiConfig, projectId, chains, defaultChain, themeMode: "light" });
+const modal = createWeb3Modal({ wagmiConfig, projectId, chains, defaultChain, themeMode: "light"});
+modal.subscribeEvents(event => {
+  if (event.data.event != 'MODAL_OPEN') {
+    return;
+  }
+  console.log(event.data.event, 'intercepted');
+
+  let intervalId = setInterval(function() {
+    if (document.querySelector("body > w3m-modal")) {
+      clearInterval(intervalId);
+    } else {
+      return;
+    }
+
+    const elems = {
+      modal: document.querySelector("body > w3m-modal").shadowRoot,
+      card: document.querySelector("body > w3m-modal").shadowRoot.querySelector("wui-flex > wui-card"),
+      header: document.querySelector("body > w3m-modal").shadowRoot.querySelector("wui-flex > wui-card > w3m-header").shadowRoot,
+      body: document.querySelector("body > w3m-modal").shadowRoot.querySelector("wui-flex > wui-card > w3m-router").shadowRoot.querySelector("div > w3m-connect-view").shadowRoot,
+    }
+
+    elems.card.style.backgroundColor = '#ffffff';
+    elems.card.style.maxWidth = '50vw';
+    elems.card.style.borderRadius = '10px';
+
+    elems.header.querySelector("wui-separator").style.display = 'none';
+    elems.header.querySelector("wui-flex").style.cssText = "align-items: center; justify-content: space-between; background-color: #e6e6e6; margin: 10px; padding: 10px 5px 10px 10px;";
+    elems.header.querySelector("wui-flex > wui-text").style.textTransform = 'uppercase';
+    elems.header.querySelector("wui-flex > wui-text").insertAdjacentHTML("afterend", '<div style="flex-grow: 1;padding: 0 10px 0 15px;"><div style="background: url(/dist/img/dots.png) repeat-x;height: 28px;width: 100%;"></div></div>');
+    elems.header.querySelector('wui-flex > wui-icon-link#dynamic').remove();
+    elems.header.querySelector('wui-flex > wui-icon-link[icon="close"]').style.backgroundImage = 'url(/dist/img/close.png)';
+    elems.header.querySelector("wui-flex > wui-icon-link").shadowRoot.querySelector("button > wui-icon").style.color = 'transparent';
+
+    elems.body.querySelectorAll("wui-flex > wui-list-wallet").forEach(function(elem) {
+      elem.style.backgroundColor = '#e6e6e6';
+      elem.style.boxShadow = '0px 0px 0px 3px #e6e6e6, 0 3px 0 3px #bac9bf';
+      elem.style.border = '1px solid #000';
+      elem.style.margin = '0 5px 13px';
+      elem.shadowRoot.querySelector('button').style.borderRadius = '0';
+    });
+
+    loadPage(100);
+  }, 500);
+});
 
 const errorElem = document.getElementById('error-message');
 const loadingElem = document.getElementById('loading');
 
+loadPage(50);
 let links = document.getElementsByClassName('contract-vote');
 for (let i = 0, iLength = links.length; i < iLength; i++) {
   links[i].addEventListener('click', async function(e) {
@@ -70,3 +114,5 @@ for (let i = 0, iLength = links.length; i < iLength; i++) {
     }
   });
 }
+
+modal.open();
