@@ -4,6 +4,10 @@
 <link rel="stylesheet" type="text/css" href="/dist/{{ manifest['public/custom/css/spog.css'].file }}">
 {% endblock %}
 
+{% block js %}
+<script type="text/javascript">loadPage(100);</script>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid mt-3">
   <h1 style="color: #B4A8FF;">SPOG!</h1>
