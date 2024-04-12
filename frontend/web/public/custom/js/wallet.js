@@ -29,6 +29,9 @@ function accountConnected() {
 const modal = createWeb3Modal({ wagmiConfig, projectId, chains, defaultChain, themeMode: "light"});
 modal.subscribeEvents(event => {
   if (event.data.event != 'MODAL_OPEN') {
+    if (event.data.event == 'CONNECT_SUCCESS') {
+      accountConnected();
+    }
     return;
   }
 
