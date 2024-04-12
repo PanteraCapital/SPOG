@@ -48,7 +48,8 @@ function loadPage(targetValue) {
     var loading = overlay.querySelector('progress');
 
     // Ensure the overlay is visible
-    if (overlay.classList.contains('d-none')) {
+    var isZeroToHundred = parseInt(loading.value) === 0 && targetValue === 100;
+    if (overlay.classList.contains('d-none') && !isZeroToHundred) {
         overlay.classList.remove('d-none');
     }
 
