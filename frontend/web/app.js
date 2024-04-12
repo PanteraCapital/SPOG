@@ -95,6 +95,14 @@ app.get('/demo/:contractAddress', async (req, res) => {
     }
   }
 
+  let funcParams = votesTalliedAbi.inputs.map((param) => param.name);
+  votesTallied = votesTallied.map((votes) => {
+    funcParams.forEach((param) => {
+      votes[param] = Number(votes[param]) / (10 ** 18);
+    });
+    return votes
+  })
+
   res.render('pages/demo.html', {
     'contractAddress': req.params.contractAddress,
     'contract': contracts[req.params.contractAddress],
