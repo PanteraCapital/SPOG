@@ -17,7 +17,7 @@ app.use('/assets', express.static('dist/assets'))
 nunjucks.configure('views', {autoescape: true, express: app});
 const env = nunjucks.configure('views', {autoescape: true, express: app});
 env.addGlobal('manifest', JSON.parse(fs.readFileSync('dist/manifest.json', 'utf-8')));
-const contractsList = yaml.load(fs.readFileSync('./../../voting-rounds.yml', 'utf8'));
+const contractsList = yaml.load(fs.readFileSync('./../../contracts.yml', 'utf8'));
 const contracts = contractsList.reduce((contracts, contract) => Object.assign({}, contracts, {[contract.address]: contract}), {});
 env.addGlobal('contracts', contracts);
 env.addGlobal('contractsList', contractsList);
