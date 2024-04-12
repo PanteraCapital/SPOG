@@ -23,7 +23,7 @@
   </header>
 
   <nav>
-    <ul class="nav flex-column">
+    <ul id="contracts-menu" class="nav flex-column">
       {% for contract in contractsList %}
       <li class="nav-item">
         <a class="nav-link {% if contract.address == contractAddress %}active{% endif %}" href="/demo/{{ contract.address }}">{{ contract.name|upper }}</a>
@@ -32,14 +32,16 @@
     </ul>
   </nav>
 
+  {% include 'widgets/loading.html' %}
+  {% block root %}
   <div class="container-md">
     <div class="row" style="position: relative; min-height: 100vh;">
       <main class="col-md-9 ms-sm-auto col-lg-10 px-md-5 mt-md-5">
-        {% include 'widgets/loading.html' %}
         {% block content %}{% endblock %}
       </main>
     </div>
   </div>
+  {% endblock %}
 
   <footer>
     <a href="/" class="btn btn-default float-start">

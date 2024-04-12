@@ -18,6 +18,12 @@ arbitrumSepolia.name = 'Sepolia Arbitrum';
 const defaultChain = arbitrumSepolia;
 const chains = [defaultChain, arbitrum];
 const wagmiConfig = defaultWagmiConfig({ chains, projectId, metadata });
+var account = getAccount();
+
+function accountConnected() {
+  document.getElementById('contracts-menu').removeClass('d-none');
+  loadPage(100);
+}
 
 // 3. Create modal
 const modal = createWeb3Modal({ wagmiConfig, projectId, chains, defaultChain, themeMode: "light"});
@@ -25,20 +31,26 @@ modal.subscribeEvents(event => {
   if (event.data.event != 'MODAL_OPEN') {
     return;
   }
-  console.log(event.data.event, 'intercepted');
 
   let intervalId = setInterval(function() {
     if (document.querySelector("body > w3m-modal")) {
       clearInterval(intervalId);
     } else {
+      loadPage(100);
+      return;
+    }
+
+    const modal = document.querySelector("body > w3m-modal").shadowRoot;
+    if (modal.querySelector("wui-flex > wui-card > w3m-router").shadowRoot.querySelector("div > w3m-account-view")) {
+      accountConnected();
       return;
     }
 
     const elems = {
-      modal: document.querySelector("body > w3m-modal").shadowRoot,
-      card: document.querySelector("body > w3m-modal").shadowRoot.querySelector("wui-flex > wui-card"),
-      header: document.querySelector("body > w3m-modal").shadowRoot.querySelector("wui-flex > wui-card > w3m-header").shadowRoot,
-      body: document.querySelector("body > w3m-modal").shadowRoot.querySelector("wui-flex > wui-card > w3m-router").shadowRoot.querySelector("div > w3m-connect-view").shadowRoot,
+      'modal': modal,
+      'card': modal.querySelector("wui-flex > wui-card"),
+      'header': modal.querySelector("wui-flex > wui-card > w3m-header").shadowRoot,
+      'body': modal.querySelector("wui-flex > wui-card > w3m-router").shadowRoot.querySelector("div > w3m-connect-view").shadowRoot,
     }
 
     elems.card.style.backgroundColor = '#ffffff';
@@ -69,50 +81,62 @@ const errorElem = document.getElementById('error-message');
 const loadingElem = document.getElementById('loading');
 
 loadPage(50);
-let links = document.getElementsByClassName('contract-vote');
-for (let i = 0, iLength = links.length; i < iLength; i++) {
-  links[i].addEventListener('click', async function(e) {
-    e.preventDefault();
 
-    if (loadingElem.style.display === '') {
-      return;
-    }
-    errorElem.style.display = 'none';
-    loadingElem.style.display = '';
+function onVoteClick(contractAddress, abi) {
+  let links = document.getElementsByClassName('contract-vote');
+  for (let i = 0, iLength = links.length; i < iLength; i++) {
+    links[i].addEventListener('click', async function(e) {
+      e.preventDefault();
 
-    var account = getAccount();
-    if (account.isConnected) {
-      try {
-        await writeContract({
-          address: contractAddress,
-          account: account,
-          abi: abi,
-          functionName: 'vote',
-          args: [e.target.getAttribute('data-vote')],
-        });
-
-        Swal.fire({
-          title: 'Vote',
-          text: 'Thank you for voting',
-          icon: 'success',
-        });
-
-        let spanElem = document.getElementById('vote-count-' + e.target.getAttribute('data-vote'));
-        spanElem.innerText = parseInt(spanElem.innerText) + 1;
-      } catch (error) {
-        [['round closed', 'This round has closed.'], ['vote once', 'You can only vote once!']].forEach(function(err) {
-          if (error.shortMessage.indexOf(err[0]) === -1) {
-            return;
-          }
-
-          errorElem.style.display = '';
-          errorElem.innerText = 'Err: ' + err[1];
-        });
+      if (loadingElem.style.display === '') {
+        return;
       }
+      errorElem.style.display = 'none';
+      loadingElem.style.display = '';
 
-      loadingElem.style.display = 'none';
-    }
-  });
+      account = getAccount();
+      if (account.isConnected) {
+        accountConnected();
+        try {
+          await writeContract({
+            address: contractAddress,
+            account: account,
+            abi: abi,
+            functionName: 'vote',
+            args: [e.target.getAttribute('data-vote')],
+          });
+
+          Swal.fire({
+            title: 'Vote',
+            text: 'Thank you for voting',
+            icon: 'success',
+          });
+
+          let spanElem = document.getElementById('vote-count-' + e.target.getAttribute('data-vote'));
+          spanElem.innerText = parseInt(spanElem.innerText) + 1;
+        } catch (error) {
+          [['round closed', 'This round has closed.'], ['vote once', 'You can only vote once!']].forEach(function(err) {
+            if (error.shortMessage.indexOf(err[0]) === -1) {
+              return;
+            }
+
+            errorElem.style.display = '';
+            errorElem.innerText = 'Err: ' + err[1];
+          });
+        }
+
+        loadingElem.style.display = 'none';
+      }
+    });
+  }
 }
 
-modal.open();
+try {  // Error when address and abi doesn't exist
+  onVoteClick(contractAddress, abi);
+} catch (err) {}
+
+if (!account.isConnected) {
+  modal.open();
+} else {
+  accountConnected();
+}

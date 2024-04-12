@@ -38,25 +38,29 @@ task('nodemon', (cb) => {
 });
 
 task('download-abi', async (cb) => {
-  const contracts = yaml.load(await fs.readFile('./../../voting-rounds.yml', 'utf8'));
+  const contracts = yaml.load(await fs.readFile('./../../contracts.yml', 'utf8'));
 
   for (const contract of contracts) {
     const abiUrl = `https://api-sepolia.arbiscan.io/api?module=contract&action=getabi&address=${contract.address}`;
 
-    await new Promise((resolve) => {
-      download(abiUrl)
-        .pipe(wait(300))
-        .pipe(rename(`${contract.address}.json`))
-        .pipe(transform('utf8', (content) => JSON.parse(content).result))
-        .pipe(gulp.dest('./abi/'))
-        .on('end', () => {
-          resolve();
-        })
-        .on('error', (err) => {
-          console.error(`Error downloading ABI for ${contract.address}: ${err.message}`);
-          resolve();
-        });
-    });
+    try {
+      await new Promise((resolve) => {
+        download(abiUrl)
+          .pipe(wait(300))
+          .pipe(rename(`${contract.address}.json`))
+          .pipe(transform('utf8', (content) => JSON.parse(content).result))
+          .pipe(gulp.dest('./abi/'))
+          .on('end', () => {
+            resolve();
+          })
+          .on('error', (err) => {
+            console.error(`Error downloading ABI for ${contract.address}: ${err.message}`);
+            resolve();
+          });
+      });
+    } catch(err) {
+      console.log(err);
+    }
   }
 
   cb()

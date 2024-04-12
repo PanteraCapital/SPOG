@@ -5,10 +5,25 @@
 {% endblock %}
 
 {% block js %}
-<script type="text/javascript">loadPage(100);</script>
+  <script type="module" src="/dist/{{ manifest['public/custom/js/wallet.js'].file }}"></script>
+  <script type="text/javascript">
+    document.getElementById('contracts-menu').addClass('d-none');
+  </script>
 {% endblock %}
 
+{#% block root %}
+<div id="modal">
+  <div>
+    <h3></h3>
+  </div>
+</div>
+{% endblock %#}
+
 {% block content %}
+
+
+
+
 <div class="container-fluid mt-3">
   <h1 style="color: #B4A8FF;">SPOG!</h1>
 
