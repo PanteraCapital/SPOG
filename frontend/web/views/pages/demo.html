@@ -22,7 +22,7 @@
 
 {% block js %}
   <script type="text/javascript">
-    const abi = {{ abi|safe }};
+    const abi = {{ abiJson|safe }};
     const contractAddress = "{{ contractAddress }}";
   </script>
   <script type="module" src="/dist/{{ manifest['public/custom/js/wallet.js'].file }}"></script>

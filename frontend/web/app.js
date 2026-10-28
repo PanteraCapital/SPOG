@@ -31,20 +31,58 @@ app.get('/', (req, res) => {
   res.render('pages/spog.html', {});
 });
 
-app.get('/demo/:contractAddress', async (req, res) => {
-  const filePath = `./abi/${req.params.contractAddress}.json`;
-  let abiString;
-  try {
-    abiString = fs.readFileSync(filePath, 'utf8');
-  } catch (e) {
-    const abiUrl = `https://api-sepolia.arbiscan.io/api?module=contract&action=getabi&address=${req.params.contractAddress}`;
-    const response = await fetch(abiUrl);
-    // Save the ABI to the local file
-    fs.writeFileSync(filePath, JSON.parse(await response.text()).result, 'utf8');
+const ABI_DIR = path.resolve('abi');
+const CONTRACT_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
-    abiString = fs.readFileSync(filePath, 'utf8');
+function abiFilePath(contractAddress) {
+  const filePath = path.resolve(ABI_DIR, `${contractAddress}.json`);
+  if (path.dirname(filePath) !== ABI_DIR) {
+    throw new Error(`ABI path escapes ${ABI_DIR}`);
   }
-  const abi = JSON.parse(abiString);
+  return filePath;
+}
+
+// The result is emitted inside a <script> element, so characters that could end
+// the element or start an HTML construct are written as JS unicode escapes.
+function serializeForScript(value) {
+  return JSON.stringify(value)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+}
+
+async function fetchAbi(contractAddress) {
+  const abiUrl = `https://api-sepolia.arbiscan.io/api?module=contract&action=getabi&address=${encodeURIComponent(contractAddress)}`;
+  const response = await fetch(abiUrl);
+  const abi = JSON.parse(JSON.parse(await response.text()).result);
+  if (!Array.isArray(abi)) {
+    throw new Error('ABI response is not an array');
+  }
+  return abi;
+}
+
+app.get('/demo/:contractAddress', async (req, res) => {
+  const contractAddress = req.params.contractAddress;
+  if (!CONTRACT_ADDRESS_PATTERN.test(contractAddress)) {
+    res.status(400).send('Invalid contract address');
+    return;
+  }
+
+  const filePath = abiFilePath(contractAddress);
+  let abi;
+  try {
+    abi = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch (e) {
+    try {
+      abi = await fetchAbi(contractAddress);
+    } catch (fetchError) {
+      res.status(502).send('Unable to load contract ABI');
+      return;
+    }
+    fs.writeFileSync(filePath, JSON.stringify(abi), 'utf8');
+  }
   const events = abi.filter(i => i.type === 'event' | i.type === 'function');
   const web3 = new Web3(process.env.WEB3_PROJECT_URL);
 
@@ -55,9 +93,9 @@ app.get('/demo/:contractAddress', async (req, res) => {
   });
   const slicedTopicsMapping = Object.fromEntries(Object.entries(topicsMapping).map(([key, value]) => [key.slice(0, 10), value]));
 
-  const contract = new web3.eth.Contract(abi, req.params.contractAddress);
+  const contract = new web3.eth.Contract(abi, contractAddress);
   const logs = await web3.eth.getPastLogs({
-    address: req.params.contractAddress,
+    address: contractAddress,
     fromBlock: 0,
     topics: [null],
   });
@@ -104,9 +142,9 @@ app.get('/demo/:contractAddress', async (req, res) => {
   })
 
   res.render('pages/demo.html', {
-    'contractAddress': req.params.contractAddress,
-    'contract': contracts[req.params.contractAddress],
-    'abi': abiString,
+    'contractAddress': contractAddress,
+    'contract': contracts[contractAddress],
+    'abiJson': serializeForScript(abi),
     'ended': ended,
     'votes': votes,
     'votesTallied': votesTallied,
