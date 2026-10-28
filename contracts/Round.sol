@@ -10,7 +10,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { ExperimentToken } from './ExperimentToken.sol';
 import "@openzeppelin/contracts/utils/math/Math.sol";
 
-contract Round is Ownable(msg.sender) {
+contract Round is Ownable {
     int votesUninformed = 0;
     int votesInformed = 0;
     int votesAbstain = 0;
@@ -32,7 +32,7 @@ contract Round is Ownable(msg.sender) {
     ExperimentToken exp;
 
 
-    constructor (address _tokenAddress){
+    constructor (address _tokenAddress, address _initialOwner) Ownable(_initialOwner) {
         TOKEN_ADDRESS = _tokenAddress;
         emit RoundCreated(true);
     }

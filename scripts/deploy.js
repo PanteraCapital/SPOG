@@ -9,7 +9,8 @@ async function main() {
   // await roundFactory.waitForDeployment();
   // console.log(`RoundFactory deployed to ${roundFactory.target}`);
   
-  const round = await hre.ethers.deployContract('Round', ['0x7172968cd3090ab3655387f24b1edE7C297FB117']);
+  const [deployer] = await hre.ethers.getSigners();
+  const round = await hre.ethers.deployContract('Round', ['0x7172968cd3090ab3655387f24b1edE7C297FB117', deployer.address]);
   await round.waitForDeployment();
   console.log(`Round deployed to ${round.target}`); 
 }
