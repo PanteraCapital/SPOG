@@ -1,0 +1,56 @@
+[
+  {
+    "type": "event",
+    "name": "RoundEnded",
+    "inputs": [
+      {
+        "name": "claimable",
+        "type": "bool",
+        "internalType": "bool",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "VoteSubmitted",
+    "inputs": [
+      {
+        "name": "voteType",
+        "type": "int256",
+        "internalType": "int256",
+        "indexed": false
+      },
+      {
+        "name": "weight",
+        "type": "int256",
+        "internalType": "int256",
+        "indexed": false
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "name": "VotesTallied",
+    "inputs": [
+      {
+        "name": "uninformedClaimable",
+        "type": "int256",
+        "internalType": "int256",
+        "indexed": false
+      },
+      {
+        "name": "informedClaimable",
+        "type": "int256",
+        "internalType": "int256",
+        "indexed": false
+      },
+      {
+        "name": "abstainedClaimable",
+        "type": "int256",
+        "internalType": "int256",
+        "indexed": false
+      }
+    ]
+  }
+]
