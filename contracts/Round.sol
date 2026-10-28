@@ -92,7 +92,7 @@ contract Round is Ownable(msg.sender) {
             uninformedClaimable = b;
         }
         if (b-v > 0) {
-            abstainedClaimable = b * 10**18 > v ? b * 10**18 - v : int(0);
+            abstainedClaimable = b - v;
         }
         emit VotesTallied(informedClaimable, uninformedClaimable, abstainedClaimable);
     }
