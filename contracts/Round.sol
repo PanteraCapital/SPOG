@@ -9,8 +9,12 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import { ExperimentToken } from './ExperimentToken.sol';
 import "@openzeppelin/contracts/utils/math/Math.sol";
+import "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import { UD60x18, convert, UNIT, ZERO } from "@prb/math/src/UD60x18.sol";
 
 contract Round is Ownable(msg.sender) {
+    UD60x18 constant PENALTY_CAP = UD60x18.wrap(0.3e18);
+
     int votesUninformed = 0;
     int votesInformed = 0;
     int votesAbstain = 0;
@@ -72,49 +76,49 @@ contract Round is Ownable(msg.sender) {
     }
 
     function tallyVotesSPOG() public onlyOwner {
-        require(ended, 'round is still open');
-
-        int votesTotal = votesInformed + votesUninformed; 
-        require(votesTotal > 0, "no votes submitted");
-
-        int b = (votesTotal/2 - votesUninformed / votesTotal) * votesInformed / votesTotal; 
-        int v = ((votesTotal - 1) / (votesTotal * votesTotal)) + (1  / votesTotal);
-
-        // allows for up to 10**59 votes
-        if (v * 10**18 > 3**18) {
-            v = 3**18;
-        }
-
-        if (b > 1) {
-            informedClaimable = b-1;
-        }
-        if (b > 0) {
-            uninformedClaimable = b;
-        }
-        if (b-v > 0) {
-            abstainedClaimable = b * 10**18 > v ? b * 10**18 - v : int(0);
-        }
-        emit VotesTallied(informedClaimable, uninformedClaimable, abstainedClaimable);
+        _tallyVotes(true);
     }
     
     function tallyVotesFREE() public onlyOwner {
+        _tallyVotes(false);
+    }
+
+    // Claimable amounts are UD60x18 values, i.e. token wei (1 token = 1e18).
+    function _tallyVotes(bool costlyAbstention) private {
         require(ended, 'round is still open');
 
         int votesTotal = votesInformed + votesUninformed;
         require(votesTotal > 0, "no votes submitted");
 
-        int b = (int(votesTotal) / 2 - (int(votesUninformed) / int(votesTotal))) * int(votesInformed) / int(votesTotal);
+        UD60x18 n = convert(uint(votesTotal));
+        UD60x18 i = convert(uint(votesInformed));
+        UD60x18 u = convert(uint(votesUninformed));
 
-        if (b > 1) {
-            informedClaimable = b-1;
+        // b = ((n/2 - u/n) * i) / n. The difference is only negative when n = u = 1,
+        // where i = 0 and b is 0 anyway.
+        UD60x18 half = n.div(convert(2));
+        UD60x18 uninformedShare = u.div(n);
+        UD60x18 quality = half > uninformedShare ? half - uninformedShare : ZERO;
+        UD60x18 b = quality.mul(i).div(n);
+
+        // v = min(0.3, (n-1)/n^2 + 1/n), only charged when abstention is costly.
+        UD60x18 v = ZERO;
+        if (costlyAbstention) {
+            v = (n - UNIT).div(n.mul(n)) + UNIT.div(n);
+            if (v > PENALTY_CAP) {
+                v = PENALTY_CAP;
+            }
         }
 
-        if (b > 0) {
-            uninformedClaimable = b;
-            abstainedClaimable = b;
-        }
-    
+        informedClaimable = _toInt(b > UNIT ? b - UNIT : ZERO);
+        uninformedClaimable = _toInt(b);
+        abstainedClaimable = _toInt(b > v ? b - v : ZERO);
+
         emit VotesTallied(informedClaimable, uninformedClaimable, abstainedClaimable);
+    }
+
+    function _toInt(UD60x18 x) private pure returns (int) {
+        return SafeCast.toInt256(x.unwrap());
     }
 
     function claimFunds() public {
@@ -122,14 +126,14 @@ contract Round is Ownable(msg.sender) {
         require(withdrawalMap[msg.sender] == false, 'can only withdraw once');
         int amount;
 
-        if (voteMap[msg.sender] == 0){
+        if (voteMap[msg.sender] == 1){
             amount = abstainedClaimable;
         }
-        if (voteMap[msg.sender] == 1){
-            amount = votesUninformed;
-        }
         if (voteMap[msg.sender] == 2){
-            amount = votesInformed;
+            amount = uninformedClaimable;
+        }
+        if (voteMap[msg.sender] == 3){
+            amount = informedClaimable;
         }        
         
         withdrawalMap[msg.sender] = true;
