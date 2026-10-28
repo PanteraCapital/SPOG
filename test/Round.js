@@ -15,7 +15,7 @@ describe("Round", function () {
 
     //deploy round contract
     Round = (await ethers.getContractFactory("Round"));
-    round = await Round.connect(owner).deploy(expContractAddy);
+    round = await Round.connect(owner).deploy(expContractAddy, owner.address);
     roundContract = await round.waitForDeployment();
     roundContractAddy = await round.getAddress();
   });
@@ -26,7 +26,7 @@ describe("Round", function () {
     });
     
     it("should emit an event upon deployment", async function () {
-      let myRound = await Round.connect(owner).deploy(expContractAddy);
+      let myRound = await Round.connect(owner).deploy(expContractAddy, owner.address);
       expect(await myRound.waitForDeployment())
           .to.emit(myRound, "RoundCreated")
           .withArgs(true);     

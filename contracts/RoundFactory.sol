@@ -16,7 +16,7 @@ contract RoundFactory is Ownable(msg.sender) {
 
     //create round
     function createRound(address _ExperimentTokenAddress, uint _roundMintAmount) public onlyOwner {
-        Round round = new Round(_ExperimentTokenAddress);
+        Round round = new Round(_ExperimentTokenAddress, msg.sender);
         
         emit RoundCreated(address(round));
         rounds.push(address(round));
