@@ -12,11 +12,12 @@ contract RoundFactory is Ownable(msg.sender) {
     address[] public rounds;
     event RoundCreated(address);
     event AllRounds(address[]);
-    ExperimentToken exp = new ExperimentToken();
+    ExperimentToken public immutable exp = new ExperimentToken();
 
     //create round
-    function createRound(address _ExperimentTokenAddress, uint _roundMintAmount) public onlyOwner {
-        Round round = new Round(_ExperimentTokenAddress);
+    //the token argument is ignored: rounds always pay out the factory token, which is the only token minted to them
+    function createRound(address, uint _roundMintAmount) public onlyOwner {
+        Round round = new Round(address(exp));
         
         emit RoundCreated(address(round));
         rounds.push(address(round));
