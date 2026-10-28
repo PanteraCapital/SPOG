@@ -120,20 +120,25 @@ contract Round is Ownable(msg.sender) {
     function claimFunds() public {
         require(ended, 'round is still open');
         require(withdrawalMap[msg.sender] == false, 'can only withdraw once');
+
+        int voteType = voteMap[msg.sender];
         int amount;
 
-        if (voteMap[msg.sender] == 0){
+        if (voteType == 1){
             amount = abstainedClaimable;
+        } else if (voteType == 2){
+            amount = uninformedClaimable;
+        } else if (voteType == 3){
+            amount = informedClaimable;
+        } else {
+            revert('did not vote');
         }
-        if (voteMap[msg.sender] == 1){
-            amount = votesUninformed;
-        }
-        if (voteMap[msg.sender] == 2){
-            amount = votesInformed;
-        }        
-        
+
+        // Zero until the round is tallied; must not consume the one withdrawal.
+        require(amount > 0, 'nothing to claim');
+
         withdrawalMap[msg.sender] = true;
-        
+
         exp = ExperimentToken(TOKEN_ADDRESS);
         require(exp.transfer(msg.sender, uint(amount)));
         emit BitRefundReceived(msg.sender, amount);
