@@ -31,20 +31,78 @@ app.get('/', (req, res) => {
   res.render('pages/spog.html', {});
 });
 
-app.get('/demo/:contractAddress', async (req, res) => {
-  const filePath = `./abi/${req.params.contractAddress}.json`;
-  let abiString;
-  try {
-    abiString = fs.readFileSync(filePath, 'utf8');
-  } catch (e) {
-    const abiUrl = `https://api-sepolia.arbiscan.io/api?module=contract&action=getabi&address=${req.params.contractAddress}`;
-    const response = await fetch(abiUrl);
-    // Save the ABI to the local file
-    fs.writeFileSync(filePath, JSON.parse(await response.text()).result, 'utf8');
+const DEMO_MAX_BLOCK_WINDOW = 50_000n;
+const DEMO_MAX_TALLY_LOOKUPS = 100;
+const DEMO_MAX_SCANS = 5;
+const DEMO_RATE_WINDOW_MS = 10_000;
+const ABI_DIR = './abi';
 
-    abiString = fs.readFileSync(filePath, 'utf8');
+const roundsByAddress = new Map(contractsList.map((contract) => [String(contract.address).toLowerCase(), contract]));
+
+const demoScanTimes = [];
+function takeDemoScanSlot() {
+  const now = Date.now();
+  while (demoScanTimes.length > 0 && now - demoScanTimes[0] >= DEMO_RATE_WINDOW_MS) {
+    demoScanTimes.shift();
   }
+  if (demoScanTimes.length >= DEMO_MAX_SCANS) {
+    return false;
+  }
+  demoScanTimes.push(now);
+  return true;
+}
+
+function parseAbi(abiString) {
   const abi = JSON.parse(abiString);
+  if (!Array.isArray(abi)) {
+    throw new Error('ABI is not an array');
+  }
+  return abi;
+}
+
+async function loadRoundAbi(address) {
+  const filePath = path.join(ABI_DIR, `${address}.json`);
+  try {
+    const abiString = fs.readFileSync(filePath, 'utf8');
+    return {abiString, abi: parseAbi(abiString)};
+  } catch (e) {
+    if (e.code !== 'ENOENT') {
+      throw e;
+    }
+  }
+  const abiUrl = `https://api-sepolia.arbiscan.io/api?module=contract&action=getabi&address=${address}`;
+  const response = await fetch(abiUrl);
+  const abiString = JSON.parse(await response.text()).result;
+  const abi = parseAbi(abiString);
+  fs.mkdirSync(ABI_DIR, {recursive: true});
+  fs.writeFileSync(filePath, abiString, 'utf8');
+  return {abiString, abi};
+}
+
+app.get('/demo/:contractAddress', async (req, res) => {
+  const round = roundsByAddress.get(String(req.params.contractAddress).toLowerCase());
+  if (!round) {
+    res.status(404).send('Unknown round');
+    return;
+  }
+  if (!takeDemoScanSlot()) {
+    res.set('Retry-After', String(Math.ceil(DEMO_RATE_WINDOW_MS / 1000)));
+    res.status(429).send('Too many requests');
+    return;
+  }
+  try {
+    await renderDemo(res, round);
+  } catch (e) {
+    console.error(`Demo for ${round.address} failed:`, e);
+    if (!res.headersSent) {
+      res.status(502).send('Unable to load round');
+    }
+  }
+});
+
+async function renderDemo(res, round) {
+  const address = round.address;
+  const {abiString, abi} = await loadRoundAbi(address);
   const events = abi.filter(i => i.type === 'event' | i.type === 'function');
   const web3 = new Web3(process.env.WEB3_PROJECT_URL);
 
@@ -55,10 +113,12 @@ app.get('/demo/:contractAddress', async (req, res) => {
   });
   const slicedTopicsMapping = Object.fromEntries(Object.entries(topicsMapping).map(([key, value]) => [key.slice(0, 10), value]));
 
-  const contract = new web3.eth.Contract(abi, req.params.contractAddress);
+  const latestBlock = BigInt(await web3.eth.getBlockNumber());
+  const fromBlock = latestBlock > DEMO_MAX_BLOCK_WINDOW ? latestBlock - DEMO_MAX_BLOCK_WINDOW : 0n;
   const logs = await web3.eth.getPastLogs({
-    address: req.params.contractAddress,
-    fromBlock: 0,
+    address,
+    fromBlock,
+    toBlock: latestBlock,
     topics: [null],
   });
 
@@ -89,7 +149,7 @@ app.get('/demo/:contractAddress', async (req, res) => {
       votes[key] += 1;
     }
 
-    if (topics.includes('VotesTallied(int256,int256,int256)')) {
+    if (topics.includes('VotesTallied(int256,int256,int256)') && votesTallied.length < DEMO_MAX_TALLY_LOOKUPS) {
       let transaction = await web3.eth.getTransaction(log.transactionHash);
       votesTallied.push({...web3.eth.abi.decodeLog(votesTalliedAbi.inputs, log.data), 'type': slicedTopicsMapping[transaction.input]});
     }
@@ -104,15 +164,15 @@ app.get('/demo/:contractAddress', async (req, res) => {
   })
 
   res.render('pages/demo.html', {
-    'contractAddress': req.params.contractAddress,
-    'contract': contracts[req.params.contractAddress],
+    'contractAddress': address,
+    'contract': round,
     'abi': abiString,
     'ended': ended,
     'votes': votes,
     'votesTallied': votesTallied,
     'voteTypeMap': voteTypeMap,
   });
-});
+}
 
 app.get('/research', (req, res) => {
   res.render('pages/research.html', {});
